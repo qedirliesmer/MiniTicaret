@@ -9,4 +9,7 @@ namespace MiniTicaret.Domain.Entities;
 public class Image:BaseEntity
 {
     public string Image_Url { get; set; }
+    public Guid ProductId { get; set; }
+    public Product Product { get; set; } = null!;
+
 }
