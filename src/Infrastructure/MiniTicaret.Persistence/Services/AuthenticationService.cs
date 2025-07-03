@@ -35,6 +35,9 @@ public class AuthenticationService : IAuthenticationService
 
     public async Task<AuthenticationTokenResponseDto> RegisterAsync(AuthenticationRegisterDto dto)
     {
+        var existingUser = await _userManager.FindByEmailAsync(dto.Email);
+        if (existingUser != null)
+            throw new Exception($"Username '{dto.Email}' is already taken.");
         var user = new AppUser
         {
             UserName = dto.Email,

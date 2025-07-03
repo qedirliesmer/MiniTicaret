@@ -14,6 +14,7 @@ using MiniTicaret.Persistence.Services;
 using MiniTicaret.Application.Abstracts.Services;
 using MiniTicaret.Persistence.Services;
 
+
 var builder = WebApplication.CreateBuilder(args);
 var config = builder.Configuration;
 
@@ -67,6 +68,7 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 builder.Services.AddScoped<MiniTicaret.Application.Abstracts.Services.IAuthenticationService, MiniTicaret.Persistence.Services.AuthenticationService>();
+builder.Services.AddScoped<MiniTicaret.Application.Abstracts.Services.IRoleService, MiniTicaret.Persistence.Services.RoleService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssembly(typeof(AuthenticationRegisterDtoValidator).Assembly);
