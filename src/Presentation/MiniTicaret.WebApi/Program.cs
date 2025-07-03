@@ -13,6 +13,9 @@ using MiniTicaret.Application.Validations.AuthenticationValidations;
 using MiniTicaret.Persistence.Services;
 using MiniTicaret.Application.Abstracts.Services;
 using MiniTicaret.Persistence.Services;
+using MiniTicaret.Application.Mapping;
+using MiniTicaret.Application.Abstracts.Repositories;
+using MiniTicaret.Persistence.Repositories;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -74,6 +77,9 @@ builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssembly(typeof(AuthenticationRegisterDtoValidator).Assembly);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddAutoMapper(typeof(ProductProfile));
+builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddDbContext<MiniTicaretDbContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("Default"));
