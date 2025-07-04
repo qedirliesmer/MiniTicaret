@@ -72,6 +72,8 @@ builder.Services.AddSwaggerGen(c =>
 });
 builder.Services.AddScoped<MiniTicaret.Application.Abstracts.Services.IAuthenticationService, MiniTicaret.Persistence.Services.AuthenticationService>();
 builder.Services.AddScoped<MiniTicaret.Application.Abstracts.Services.IRoleService, MiniTicaret.Persistence.Services.RoleService>();
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssembly(typeof(AuthenticationRegisterDtoValidator).Assembly);
