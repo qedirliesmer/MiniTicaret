@@ -13,15 +13,15 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Infrastructure", "Infrastru
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Presentation", "Presentation", "{94A69AD6-5459-47F3-BF68-98858D403F8F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiniTicaret.Domain", "src\Core\MiniTicaret.Domain\MiniTicaret.Domain.csproj", "{5DE63630-CA6C-4423-9836-2A428210A501}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MiniTicaret.Domain", "src\Core\MiniTicaret.Domain\MiniTicaret.Domain.csproj", "{5DE63630-CA6C-4423-9836-2A428210A501}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiniTicaret.Application", "src\Core\MiniTicaret.Application\MiniTicaret.Application.csproj", "{CD7B6935-82BE-485B-8362-FB8E21C9A4EB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MiniTicaret.Application", "src\Core\MiniTicaret.Application\MiniTicaret.Application.csproj", "{CD7B6935-82BE-485B-8362-FB8E21C9A4EB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiniTicaret.Persistence", "src\Infrastructure\MiniTicaret.Persistence\MiniTicaret.Persistence.csproj", "{CCAAD533-E74D-4E86-A560-74E0351F089A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MiniTicaret.Persistence", "src\Infrastructure\MiniTicaret.Persistence\MiniTicaret.Persistence.csproj", "{CCAAD533-E74D-4E86-A560-74E0351F089A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiniTicaret.Infrastructure", "src\Infrastructure\MiniTicaret.Infrastructure\MiniTicaret.Infrastructure.csproj", "{6999D10F-A8E1-429B-A345-FF641BD6E2EB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MiniTicaret.Infrastructure", "src\Infrastructure\MiniTicaret.Infrastructure\MiniTicaret.Infrastructure.csproj", "{6999D10F-A8E1-429B-A345-FF641BD6E2EB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiniTicaret.WebApi", "src\Presentation\MiniTicaret.WebApi\MiniTicaret.WebApi.csproj", "{BB4B38D8-35BB-4CDE-B433-06A6E5912C68}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MiniTicaret.WebApi", "src\Presentation\MiniTicaret.WebApi\MiniTicaret.WebApi.csproj", "{BB4B38D8-35BB-4CDE-B433-06A6E5912C68}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
