@@ -12,6 +12,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using MiniTicaret.Application.Shared.Permissions;
 namespace MiniTicaret.Persistence.Services;
 
 public class AuthenticationService : IAuthenticationService
@@ -81,9 +82,18 @@ public class AuthenticationService : IAuthenticationService
             new Claim(ClaimTypes.NameIdentifier, user.Id),
             new Claim(ClaimTypes.Name, user.UserName),
             new Claim(ClaimTypes.Email, user.Email)
-        };
+        }; 
         foreach (var role in roles)
+        {
             claims.Add(new Claim(ClaimTypes.Role, role));
+
+            // ✅ Hər bir role görə permission claim-ləri əlavə et
+            var permissions = Permissions.GetPermissionsByRole(role);
+            foreach (var permission in permissions.Distinct())
+            {
+                claims.Add(new Claim("Permission", permission));
+            }
+        }
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);

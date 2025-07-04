@@ -16,6 +16,7 @@ using MiniTicaret.Persistence.Services;
 using MiniTicaret.Application.Mapping;
 using MiniTicaret.Application.Abstracts.Repositories;
 using MiniTicaret.Persistence.Repositories;
+using MiniTicaret.Application.Shared.Permissions;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -70,10 +71,20 @@ builder.Services.AddSwaggerGen(c =>
         { jwtSecurityScheme, Array.Empty<string>() }
     });
 });
+builder.Services.AddAuthorization(options =>
+{
+    foreach (var permission in PermissionHelper.GetAllPermissionList())
+    {
+        options.AddPolicy(permission, policy =>
+            policy.RequireClaim("Permission", permission));
+    }
+});
 builder.Services.AddScoped<MiniTicaret.Application.Abstracts.Services.IAuthenticationService, MiniTicaret.Persistence.Services.AuthenticationService>();
 builder.Services.AddScoped<MiniTicaret.Application.Abstracts.Services.IRoleService, MiniTicaret.Persistence.Services.RoleService>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssembly(typeof(AuthenticationRegisterDtoValidator).Assembly);
