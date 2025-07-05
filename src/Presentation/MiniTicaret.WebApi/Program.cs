@@ -17,6 +17,7 @@ using MiniTicaret.Application.Mapping;
 using MiniTicaret.Application.Abstracts.Repositories;
 using MiniTicaret.Persistence.Repositories;
 using MiniTicaret.Application.Shared.Permissions;
+using MiniTicaret.WebApi.Middlewares;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -101,6 +102,7 @@ builder.Services.AddDbContext<MiniTicaretDbContext>(options =>
 var app = builder.Build();
 
 app.UseHttpsRedirection();
+app.UseMiddleware<ExceptionMiddleware>();
 
 app.UseAuthentication(); // ✅ vacibdir
 
