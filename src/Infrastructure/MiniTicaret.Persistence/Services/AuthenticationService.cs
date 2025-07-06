@@ -13,32 +13,40 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using MiniTicaret.Application.Shared.Permissions;
+using Microsoft.Extensions.Options;
+using MiniTicaret.Application.Shared.Settings;
+using Microsoft.Extensions.Logging;
+using MiniTicaret.Application.Exceptions;
 namespace MiniTicaret.Persistence.Services;
 
 public class AuthenticationService : IAuthenticationService
 {
     private readonly UserManager<AppUser> _userManager;
     private readonly RoleManager<IdentityRole> _roleManager;
-    private readonly IConfiguration _config;
-    private readonly IHttpContextAccessor _contextAccessor;
+    private readonly JWTSettings _jwtSettings;
+    private readonly ILogger<AuthenticationService> _logger;
 
     public AuthenticationService(
         UserManager<AppUser> userManager,
         RoleManager<IdentityRole> roleManager,
-        IConfiguration config,
-        IHttpContextAccessor contextAccessor)
+        IOptions<JWTSettings> jwtOptions,
+        ILogger<AuthenticationService> logger)
     {
         _userManager = userManager;
         _roleManager = roleManager;
-        _config = config;
-        _contextAccessor = contextAccessor;
+        _jwtSettings = jwtOptions.Value;
+        _logger = logger;
     }
 
     public async Task<AuthenticationTokenResponseDto> RegisterAsync(AuthenticationRegisterDto dto)
     {
         var existingUser = await _userManager.FindByEmailAsync(dto.Email);
         if (existingUser != null)
-            throw new Exception($"Username '{dto.Email}' is already taken.");
+        {
+            _logger.LogWarning("Registration attempt with existing email: {Email}", dto.Email);
+            throw new ValidationException(new[] { $"User '{dto.Email}' already exists." });
+        }
+
         var user = new AppUser
         {
             UserName = dto.Email,
@@ -48,12 +56,29 @@ public class AuthenticationService : IAuthenticationService
 
         var result = await _userManager.CreateAsync(user, dto.Password);
         if (!result.Succeeded)
-            throw new Exception(string.Join(", ", result.Errors.Select(e => e.Description)));
+        {
+            _logger.LogWarning("User creation failed for email {Email}: {Errors}", dto.Email, result.Errors.Select(e => e.Description));
+            throw new ValidationException(result.Errors.Select(e => e.Description));
+        }
 
         if (!await _roleManager.RoleExistsAsync(dto.Role))
-            await _roleManager.CreateAsync(new IdentityRole(dto.Role));
+        {
+            var roleResult = await _roleManager.CreateAsync(new IdentityRole(dto.Role));
+            if (!roleResult.Succeeded)
+            {
+                _logger.LogError("Role creation failed: {Errors}", roleResult.Errors.Select(e => e.Description));
+                throw new Exception("Failed to create user role.");
+            }
+        }
 
-        await _userManager.AddToRoleAsync(user, dto.Role);
+        var addRoleResult = await _userManager.AddToRoleAsync(user, dto.Role);
+        if (!addRoleResult.Succeeded)
+        {
+            _logger.LogError("Adding role to user failed: {Errors}", addRoleResult.Errors.Select(e => e.Description));
+            throw new Exception("Failed to assign role to user.");
+        }
+
+        _logger.LogInformation("User registered successfully: {Email}", dto.Email);
 
         return await GenerateToken(user);
     }
@@ -62,7 +87,12 @@ public class AuthenticationService : IAuthenticationService
     {
         var user = await _userManager.FindByEmailAsync(dto.Email);
         if (user == null || !await _userManager.CheckPasswordAsync(user, dto.Password))
-            throw new Exception("Email və ya şifrə yanlışdır");
+        {
+            _logger.LogWarning("Invalid login attempt for email: {Email}", dto.Email);
+            throw new ValidationException(new[] { "Email or password is incorrect." });
+        }
+
+        _logger.LogInformation("User logged in successfully: {Email}", dto.Email);
 
         return await GenerateToken(user);
     }
@@ -70,24 +100,29 @@ public class AuthenticationService : IAuthenticationService
     public async Task<AppUser> GetMeAsync(string userId)
     {
         var user = await _userManager.FindByIdAsync(userId);
-        if (user == null) throw new Exception("İstifadəçi tapılmadı");
+        if (user == null)
+        {
+            _logger.LogWarning("User not found with Id: {UserId}", userId);
+            throw new Exception("User not found");
+        }
         return user;
     }
 
     private async Task<AuthenticationTokenResponseDto> GenerateToken(AppUser user)
     {
         var roles = await _userManager.GetRolesAsync(user);
+
         var claims = new List<Claim>
         {
             new Claim(ClaimTypes.NameIdentifier, user.Id),
-            new Claim(ClaimTypes.Name, user.UserName),
-            new Claim(ClaimTypes.Email, user.Email)
-        }; 
+            new Claim(ClaimTypes.Name, user.UserName ?? throw new Exception("UserName is null")),
+            new Claim(ClaimTypes.Email, user.Email ?? throw new Exception("Email is null"))
+        };
+
         foreach (var role in roles)
         {
             claims.Add(new Claim(ClaimTypes.Role, role));
 
-            // ✅ Hər bir role görə permission claim-ləri əlavə et
             var permissions = Permissions.GetPermissionsByRole(role);
             foreach (var permission in permissions.Distinct())
             {
@@ -95,26 +130,26 @@ public class AuthenticationService : IAuthenticationService
             }
         }
 
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.SecretKey));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-        var expires = DateTime.UtcNow.AddHours(1);
+        var expires = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpiryMinutes);
 
         var token = new JwtSecurityToken(
-            issuer: _config["Jwt:Issuer"],
-            audience: _config["Jwt:Audience"],
+            issuer: _jwtSettings.Issuer,
+            audience: _jwtSettings.Audience,
             claims: claims,
             expires: expires,
             signingCredentials: creds
         );
 
         var accessToken = new JwtSecurityTokenHandler().WriteToken(token);
+        _logger.LogInformation("JWT Token generated for user {UserId}", user.Id);
 
         return new AuthenticationTokenResponseDto
         {
             AccessToken = accessToken,
-            RefreshToken = "", // refresh token əlavə etməmisənsə, boş saxla
+            RefreshToken = "", // refresh token varsa əlavə edə bilərsən
             ExpireDate = expires
         };
     }
-   
 }

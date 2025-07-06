@@ -12,34 +12,55 @@ namespace MiniTicaret.WebApi.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IAuthenticationService _authService;
-    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public AuthController(IAuthenticationService authService, IHttpContextAccessor httpContextAccessor)
+    public AuthController(IAuthenticationService authService)
     {
         _authService = authService;
-        _httpContextAccessor = httpContextAccessor;
     }
 
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] AuthenticationRegisterDto dto)
     {
-        var result = await _authService.RegisterAsync(dto);
-        return Ok(result);
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        try
+        {
+            var result = await _authService.RegisterAsync(dto);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] AuthenticationLoginDto dto)
     {
-        var result = await _authService.LoginAsync(dto);
-        return Ok(result);
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        try
+        {
+            var result = await _authService.LoginAsync(dto);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [Authorize]
     [HttpGet("me")]
     public async Task<IActionResult> Me()
     {
-        var userId = _httpContextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var user = await _authService.GetMeAsync(userId!);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized(new { message = "User not authorized." });
+
+        var user = await _authService.GetMeAsync(userId);
         return Ok(new { user.FullName, user.Email, user.Id });
     }
 }
