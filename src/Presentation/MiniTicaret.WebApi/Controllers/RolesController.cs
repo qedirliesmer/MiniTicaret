@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using MiniTicaret.Application.Abstracts.Services;
 using MiniTicaret.Application.DTOs.RoleDTOs;
 
@@ -8,6 +9,7 @@ namespace MiniTicaret.WebApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles = "Admin")]
     public class RolesController : ControllerBase
     {
         private readonly IRoleService _roleService;
