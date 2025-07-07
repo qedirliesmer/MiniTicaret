@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using MiniTicaret.Application.Abstracts.Services;
 using MiniTicaret.Application.DTOs.CategoryDTOs;
+using MiniTicaret.Application.Shared.Permissions;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -19,6 +20,7 @@ namespace MiniTicaret.WebApi.Controllers
         }
 
         [HttpGet]
+        [Authorize(Policy = Permissions.Category.GetAll)]
         public async Task<IActionResult> Get()
         {
             var result = await _categoryService.GetAllAsync();
@@ -26,7 +28,7 @@ namespace MiniTicaret.WebApi.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Policy = Permissions.Category.MainCreate)]
         public async Task<IActionResult> Create([FromBody] CategoryCreateDto dto)
         {
             await _categoryService.CreateAsync(dto);
@@ -34,10 +36,18 @@ namespace MiniTicaret.WebApi.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Policy = Permissions.Category.Update)]
         public async Task<IActionResult> Update(Guid id, [FromBody] CategoryUpdateDto dto)
         {
             await _categoryService.UpdateAsync(id, dto);
+            return NoContent();
+        }
+
+        [HttpDelete("{id}")]
+        [Authorize(Policy = Permissions.Category.Delete)]
+        public async Task<IActionResult> Delete(Guid id)
+        {
+            await _categoryService.DeleteAsync(id);
             return NoContent();
         }
     }

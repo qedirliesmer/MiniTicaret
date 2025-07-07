@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using MiniTicaret.Application.Abstracts.Services;
 using MiniTicaret.Application.DTOs.ReviewDTOs;
+using MiniTicaret.Application.Shared.Permissions;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -19,7 +20,7 @@ namespace MiniTicaret.WebApi.Controllers
         }
 
         [HttpPost]
-        [Authorize]
+        [Authorize(Policy = Permissions.Review.Create)]
         public async Task<IActionResult> AddReview(Guid productId, [FromBody] ReviewCreateDto dto)
         {
             await _reviewService.AddReviewAsync(productId, dto, User);
@@ -27,6 +28,7 @@ namespace MiniTicaret.WebApi.Controllers
         }
 
         [HttpGet]
+        [Authorize(Policy = Permissions.Review.Get)]
         public async Task<IActionResult> GetReviews(Guid productId)
         {
             var reviews = await _reviewService.GetReviewsByProductIdAsync(productId);
@@ -34,7 +36,7 @@ namespace MiniTicaret.WebApi.Controllers
         }
 
         [HttpPut("{reviewId}")]
-        [Authorize]
+        [Authorize(Policy = Permissions.Review.Update)]
         public async Task<IActionResult> UpdateReview(Guid productId, Guid reviewId, [FromBody] ReviewUpdateDto dto)
         {
             await _reviewService.UpdateReviewAsync(reviewId, dto, User);
@@ -42,7 +44,7 @@ namespace MiniTicaret.WebApi.Controllers
         }
 
         [HttpDelete("{reviewId}")]
-        [Authorize]
+        [Authorize(Policy = Permissions.Review.Delete)]
         public async Task<IActionResult> DeleteReview(Guid productId, Guid reviewId)
         {
             await _reviewService.DeleteReviewAsync(reviewId, User);

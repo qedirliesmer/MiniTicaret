@@ -59,15 +59,16 @@ builder.Services.AddAuthentication(options =>
     {
         OnAuthenticationFailed = ctx =>
         {
-            Console.WriteLine("Authentication failed: " + ctx.Exception.Message);
+            Console.WriteLine($"❌ Token xətası: {ctx.Exception.Message}");
             return Task.CompletedTask;
         },
         OnTokenValidated = ctx =>
         {
-            Console.WriteLine("Token validated for " + ctx.Principal.Identity?.Name);
+            Console.WriteLine($"✅ Token təsdiq olundu: {ctx.Principal.Identity?.Name}");
             return Task.CompletedTask;
         }
     };
+
     options.RequireHttpsMetadata = false; // Development üçün false, Production-da true olmalıdır
     options.SaveToken = true;
     options.TokenValidationParameters = new TokenValidationParameters
@@ -131,8 +132,15 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IFavoriteService, FavoriteService>();
+builder.Services.AddScoped<IFavoriteRepository, FavoriteRepository>();
+builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
+builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 
 builder.Services.AddHttpContextAccessor();
@@ -156,9 +164,9 @@ builder.Services.AddDbContext<MiniTicaretDbContext>(options =>
 
 var app = builder.Build();
 
-app.UseRouting();
-
 app.UseHttpsRedirection();
+
+app.UseRouting();
 
 app.UseMiddleware<ExceptionMiddleware>();
 

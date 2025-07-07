@@ -25,4 +25,9 @@ public class CategoryRepository : Repository<Category>, ICategoryRepository
             .Include(c => c.SubCategories)
             .ToListAsync();
     }
+    public async Task DeleteAsync(Category entity)
+    {
+        _context.Categories.Remove(entity);
+        await _context.SaveChangesAsync();
+    }
 }

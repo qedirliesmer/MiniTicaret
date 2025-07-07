@@ -10,4 +10,5 @@ namespace MiniTicaret.Application.Abstracts.Repositories;
 public interface ICategoryRepository : IRepository<Category>
 {
     Task<List<Category>> GetAllWithSubCategoriesAsync();
+    Task DeleteAsync(Category entity);
 }

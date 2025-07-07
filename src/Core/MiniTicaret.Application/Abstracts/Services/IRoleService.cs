@@ -12,4 +12,5 @@ public interface IRoleService
     Task<List<RoleGetDto>> GetAllAsync();
     Task CreateAsync(RoleCreateDto dto);
     Task DeleteAsync(string roleName);
+    Task UpdateAsync(RoleUpdateDto dto);
 }
