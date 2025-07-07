@@ -43,6 +43,17 @@ public class RoleService : IRoleService
         if (!result.Succeeded)
             throw new Exception(string.Join(", ", result.Errors.Select(e => e.Description)));
     }
+    public async Task UpdateAsync(RoleUpdateDto dto)
+    {
+        var role = await _roleManager.FindByNameAsync(dto.OldName);
+        if (role == null)
+            throw new Exception("Role not found");
 
-    
+        role.Name = dto.NewName;
+
+        var result = await _roleManager.UpdateAsync(role);
+        if (!result.Succeeded)
+            throw new Exception("Failed to update role");
+    }
+
 }

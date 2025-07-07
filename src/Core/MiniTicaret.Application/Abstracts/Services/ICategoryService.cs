@@ -13,4 +13,5 @@ public interface ICategoryService
     Task<List<CategoryGetDto>> GetAllAsync();
     Task CreateAsync(CategoryCreateDto dto);
     Task UpdateAsync(Guid id, CategoryUpdateDto dto);
+    Task DeleteAsync(Guid id);
 }

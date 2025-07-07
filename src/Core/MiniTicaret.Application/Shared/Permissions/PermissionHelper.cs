@@ -7,34 +7,32 @@ using System.Threading.Tasks;
 
 namespace MiniTicaret.Application.Shared.Permissions;
 
-public class PermissionHelper
+public static class PermissionHelper
 {
     public static Dictionary<string, List<string>> GetAllPermissions()
     {
         var result = new Dictionary<string, List<string>>();
 
-        Type[] nestedTypes = typeof(MiniTicaret.Application.Shared.Permissions.Permissions)
+        var nestedTypes = typeof(Permissions)
             .GetNestedTypes(BindingFlags.Public | BindingFlags.Static);
 
-        foreach (var moduleType in nestedTypes)
+        foreach (var type in nestedTypes)
         {
-            var allField = moduleType.GetField("All", BindingFlags.Public | BindingFlags.Static);
-
-            if (allField is not null)
+            var allField = type.GetField("All", BindingFlags.Public | BindingFlags.Static);
+            if (allField?.GetValue(null) is List<string> permissionList)
             {
-                var permissions = allField.GetValue(null) as List<string>;
-
-                if (permissions is not null)
-
-                    result.Add(moduleType.Name, permissions);
+                result.Add(type.Name, permissionList);
             }
         }
+
         return result;
     }
 
     public static List<string> GetAllPermissionList()
     {
-        return GetAllPermissions().SelectMany(x => x.Value).ToList();
-
+        return GetAllPermissions()
+            .SelectMany(kv => kv.Value)
+            .Distinct() // təkrarlanmaların qarşısını alır
+            .ToList();
     }
 }

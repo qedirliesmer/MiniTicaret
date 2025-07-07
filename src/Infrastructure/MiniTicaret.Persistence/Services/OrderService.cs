@@ -13,16 +13,17 @@ namespace MiniTicaret.Persistence.Services;
 
 public class OrderService : IOrderService
 {
-
+    private readonly IEmailService _emailService;
     private readonly IOrderRepository _orderRepository;
     private readonly IProductRepository _productRepository;
     private readonly IMapper _mapper;
 
-    public OrderService(IOrderRepository orderRepository, IProductRepository productRepository, IMapper mapper)
+    public OrderService(IOrderRepository orderRepository, IProductRepository productRepository, IMapper mapper, IEmailService emailService)
     {
         _orderRepository = orderRepository;
         _productRepository = productRepository;
         _mapper = mapper;
+        _emailService = emailService;
     }
 
     public async Task<Guid> CreateOrderAsync(OrderCreateDto dto, string buyerId)

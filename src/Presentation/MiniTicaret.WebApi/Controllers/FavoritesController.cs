@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using MiniTicaret.Application.Abstracts.Services;
+using MiniTicaret.Application.Shared.Permissions;
 using System.Security.Claims;
 
 namespace MiniTicaret.WebApi.Controllers
@@ -17,6 +19,7 @@ namespace MiniTicaret.WebApi.Controllers
         }
 
         [HttpPost]
+        [Authorize(Policy = Permissions.Product.AddProductFavourite)]
         public async Task<IActionResult> AddToFavorite(Guid productId)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -28,6 +31,7 @@ namespace MiniTicaret.WebApi.Controllers
         }
 
         [HttpDelete]
+        [Authorize(Policy = Permissions.Product.DeleteFavourite)]
         public async Task<IActionResult> RemoveFromFavorite(Guid productId)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -40,6 +44,7 @@ namespace MiniTicaret.WebApi.Controllers
 
         [HttpGet]
         [Route("~/api/favorite")]
+        [Authorize(Policy = Permissions.Product.GetAllFavourite)]
         public async Task<IActionResult> GetUserFavorites()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);

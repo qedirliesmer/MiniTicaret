@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using MiniTicaret.Application.Abstracts.Services;
 using MiniTicaret.Application.DTOs.OrderDTOs;
+using MiniTicaret.Application.Shared.Permissions;
 using System.Security.Claims;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
@@ -23,7 +24,7 @@ namespace MiniTicaret.WebApi.Controllers
         /// Sifariş yarat
         /// </summary>
         [HttpPost]
-        [Authorize(Roles = "Buyer,Admin")]
+        [Authorize(Policy = Permissions.Order.Create)]
         public async Task<IActionResult> CreateOrder([FromBody] OrderCreateDto dto)
         {
             var buyerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -35,7 +36,7 @@ namespace MiniTicaret.WebApi.Controllers
         /// Aktiv istifadəçinin etdiyi sifarişlər
         /// </summary>
         [HttpGet("my")]
-        [Authorize(Roles = "Buyer,Admin")]
+        [Authorize(Policy = Permissions.Order.GetMy)]
         public async Task<IActionResult> GetMyOrders()
         {
             var buyerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -47,7 +48,7 @@ namespace MiniTicaret.WebApi.Controllers
         /// Aktiv istifadəçinin satdığı məhsullara gələn sifarişlər
         /// </summary>
         [HttpGet("my-sales")]
-        [Authorize(Roles = "Seller,Admin")]
+        [Authorize(Policy = Permissions.Order.GetMySales)]
         public async Task<IActionResult> GetMySales()
         {
             var sellerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -59,7 +60,7 @@ namespace MiniTicaret.WebApi.Controllers
         /// Sifarişin ətraflı məlumatı
         /// </summary>
         [HttpGet("{id}")]
-        [Authorize] // Buyer və ya Seller daxil ola bilir
+        [Authorize(Policy = Permissions.Order.GetDetail)]
         public async Task<IActionResult> GetById(Guid id)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);

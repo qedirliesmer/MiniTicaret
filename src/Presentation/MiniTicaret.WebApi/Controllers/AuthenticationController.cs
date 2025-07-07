@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using MiniTicaret.Application.DTOs.AuthenticationDTOs;
 using System.Security.Claims;
 using MiniTicaret.Application.Abstracts.Services;
+using MiniTicaret.Application.Shared.Permissions;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -52,7 +53,7 @@ public class AuthController : ControllerBase
         }
     }
 
-    [Authorize]
+    [Authorize(Policy = Permissions.User.GetById)]
     [HttpGet("me")]
     public async Task<IActionResult> Me()
     {

@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using MiniTicaret.Application.Abstracts.Services;
 using MiniTicaret.Application.DTOs.ProductDTOs;
+using MiniTicaret.Application.Shared.Permissions;
 using System.Security.Claims;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
@@ -21,6 +22,7 @@ namespace MiniTicaret.WebApi.Controllers
 
         // ✅ GET /api/products?categoryId=&minPrice=&maxPrice=&search=
         [HttpGet]
+        [Authorize(Policy = Permissions.Product.GetAll)]
         public async Task<IActionResult> GetAll([FromQuery] Guid? categoryId, [FromQuery] decimal? minPrice, [FromQuery] decimal? maxPrice, [FromQuery] string? search)
         {
             var result = await _productService.GetAllAsync(categoryId, minPrice, maxPrice, search);
@@ -29,6 +31,7 @@ namespace MiniTicaret.WebApi.Controllers
 
         // ✅ GET /api/products/{id}
         [HttpGet("{id}")]
+        
         public async Task<IActionResult> GetById(Guid id)
         {
             var result = await _productService.GetByIdAsync(id);
@@ -40,7 +43,7 @@ namespace MiniTicaret.WebApi.Controllers
 
         // ✅ POST /api/products
         [HttpPost]
-        [Authorize(Roles = "Seller")]
+        [Authorize(Policy = Permissions.Product.Create)]
         public async Task<IActionResult> Create([FromBody] ProductCreateDto dto)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -50,7 +53,7 @@ namespace MiniTicaret.WebApi.Controllers
 
         // ✅ PUT /api/products/{id}
         [HttpPut("{id}")]
-        [Authorize(Roles = "Seller")]
+        [Authorize(Policy = Permissions.Product.Update)]
         public async Task<IActionResult> Update(Guid id, [FromBody] ProductUpdateDto dto)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -64,7 +67,7 @@ namespace MiniTicaret.WebApi.Controllers
 
         // ✅ DELETE /api/products/{id}
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Seller")]
+        [Authorize(Policy = Permissions.Product.Delete)]
         public async Task<IActionResult> Delete(Guid id)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -78,7 +81,7 @@ namespace MiniTicaret.WebApi.Controllers
 
         // ✅ GET /api/products/my
         [HttpGet("my")]
-        [Authorize(Roles = "Seller")]
+        [Authorize(Policy = Permissions.Product.GetMy)]
         public async Task<IActionResult> GetMyProducts()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);

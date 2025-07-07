@@ -3,6 +3,7 @@ using MiniTicaret.Application.Abstracts.Repositories;
 using MiniTicaret.Application.Abstracts.Services;
 using MiniTicaret.Application.DTOs.CategoryDTOs;
 using MiniTicaret.Domain.Entities;
+using MiniTicaret.Persistence.Repositories;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -50,5 +51,13 @@ public class CategoryService : ICategoryService
         category.ParentId = dto.ParentId;
 
         await _repository.SaveChangesAsync();
+    }
+    public async Task DeleteAsync(Guid id)
+    {
+        var category = await _repository.GetByIdAsync(id);
+        if (category == null)
+            throw new Exception("Category not found");
+
+        await _repository.DeleteAsync(category);
     }
 }

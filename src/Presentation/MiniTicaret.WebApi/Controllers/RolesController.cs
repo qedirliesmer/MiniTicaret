@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using MiniTicaret.Application.Abstracts.Services;
 using MiniTicaret.Application.DTOs.RoleDTOs;
+using MiniTicaret.Application.Shared.Permissions;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -18,6 +19,7 @@ namespace MiniTicaret.WebApi.Controllers
             _roleService = roleService;
         }
         [HttpGet]
+        [Authorize(Policy = Permissions.Role.GetAllPermission)]
         public async Task<IActionResult> GetAll()
         {
             var roles = await _roleService.GetAllAsync();
@@ -26,18 +28,22 @@ namespace MiniTicaret.WebApi.Controllers
 
         // POST: /api/roles
         [HttpPost]
+        [Authorize(Policy = Permissions.Role.Create)]
         public async Task<IActionResult> Create([FromBody] RoleCreateDto dto)
         {
             await _roleService.CreateAsync(dto);
             return StatusCode(201); // Created
         }
-
-        // DELETE: /api/roles/{roleName}
-        [HttpDelete("{roleName}")]
-        public async Task<IActionResult> Delete(string roleName)
+        [HttpPut("{roleName}")]
+        [Authorize(Policy = Permissions.Role.Update)]
+        
+        public async Task<IActionResult> Update(string roleName, [FromBody] RoleUpdateDto dto)
         {
-            await _roleService.DeleteAsync(roleName);
-            return NoContent(); // 204
+            if (roleName != dto.OldName)
+                return BadRequest("Role name in URL and payload do not match.");
+
+            await _roleService.UpdateAsync(dto);
+            return NoContent();
         }
 
     }
