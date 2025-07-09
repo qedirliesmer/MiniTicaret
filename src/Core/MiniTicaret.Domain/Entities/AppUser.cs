@@ -19,6 +19,7 @@ public class AppUser : IdentityUser
     public ICollection<Favorite> Favorites { get; set; }
     public DateTime? CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
+    public DateTime? ExpiryDate { get; set; }
 
 }
   

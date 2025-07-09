@@ -12,34 +12,33 @@ namespace MiniTicaret.Persistence.Services;
 
 public class AccountService : IAccountService
 {
+    private readonly RoleManager<IdentityRole> _roleManager;
     private readonly UserManager<AppUser> _userManager;
 
-    public AccountService(UserManager<AppUser> userManager)
+    public AccountService(RoleManager<IdentityRole> roleManager, UserManager<AppUser> userManager)
     {
+        _roleManager = roleManager;
         _userManager = userManager;
     }
 
-    public async Task UpdateProfileAsync(string userId, UpdateProfileDto dto)
+    public async Task<bool> CreateRoleAsync(string roleName)
     {
-        var user = await _userManager.FindByIdAsync(userId)
-            ?? throw new Exception("İstifadəçi tapılmadı");
+        if (await _roleManager.RoleExistsAsync(roleName))
+            return false;
 
-        user.FullName = dto.FullName;
-        user.Email = dto.Email;
-        user.UserName = dto.Email;
-
-        var result = await _userManager.UpdateAsync(user);
-        if (!result.Succeeded)
-            throw new Exception(string.Join(", ", result.Errors.Select(x => x.Description)));
+        var result = await _roleManager.CreateAsync(new IdentityRole(roleName));
+        return result.Succeeded;
     }
 
-    public async Task ChangePasswordAsync(string userId, ChangePasswordDto dto)
+    public async Task<bool> AssignRoleToUserAsync(string userId, string roleName)
     {
-        var user = await _userManager.FindByIdAsync(userId)
-            ?? throw new Exception("İstifadəçi tapılmadı");
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null) return false;
 
-        var result = await _userManager.ChangePasswordAsync(user, dto.CurrentPassword, dto.NewPassword);
-        if (!result.Succeeded)
-            throw new Exception(string.Join(", ", result.Errors.Select(x => x.Description)));
+        if (!await _roleManager.RoleExistsAsync(roleName))
+            return false;
+
+        var result = await _userManager.AddToRoleAsync(user, roleName);
+        return result.Succeeded;
     }
 }

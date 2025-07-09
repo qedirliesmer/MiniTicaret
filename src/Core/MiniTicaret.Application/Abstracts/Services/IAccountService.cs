@@ -9,6 +9,6 @@ namespace MiniTicaret.Application.Abstracts.Services;
 
 public interface IAccountService
 {
-    Task UpdateProfileAsync(string userId, UpdateProfileDto dto);
-    Task ChangePasswordAsync(string userId, ChangePasswordDto dto);
+    Task<bool> CreateRoleAsync(string roleName);
+    Task<bool> AssignRoleToUserAsync(string userId, string roleName);
 }
