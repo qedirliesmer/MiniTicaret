@@ -64,5 +64,15 @@ public class AuthController : ControllerBase
         var user = await _authService.GetMeAsync(userId);
         return Ok(new { user.FullName, user.Email, user.Id });
     }
+
+    [HttpGet("confirm-email")]
+    public async Task<IActionResult> ConfirmEmail([FromQuery] string userId, [FromQuery] string token)
+    {
+        var success = await _authService.ConfirmEmailAsync(userId, token);
+        if (success)
+            return Ok("Email təsdiqləndi.");
+        else
+            return BadRequest("Email təsdiqində problem yarandı.");
+    }
 }
 

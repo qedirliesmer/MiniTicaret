@@ -13,5 +13,7 @@ public interface IAuthenticationService
     Task<AuthenticationTokenResponseDto> RegisterAsync(AuthenticationRegisterDto registerDto);
     Task<AuthenticationTokenResponseDto> LoginAsync(AuthenticationLoginDto loginDto);
     Task<AppUser> GetMeAsync(string userId);
+    Task<bool> ConfirmEmailAsync(string userId, string token);
+    Task<bool> CanUserLoginAsync(AppUser user);
 
 }

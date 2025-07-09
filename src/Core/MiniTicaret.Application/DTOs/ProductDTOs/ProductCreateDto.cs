@@ -13,4 +13,5 @@ public class ProductCreateDto
     public decimal Price { get; set; }
     public Guid CategoryId { get; set; }
     public List<string> ImageUrls { get; set; }
+    //public IFormFile Image { get; set; }
 }

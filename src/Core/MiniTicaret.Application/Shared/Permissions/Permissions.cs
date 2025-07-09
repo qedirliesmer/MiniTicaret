@@ -159,8 +159,7 @@ public class Permissions
                 Review.Get,
                 Account.AddRole,
                 Account.Create,
-                Account.UpdateProfile,
-                Account.ChangePassword
+              
             },
 
             "Seller" => new List<string>
@@ -181,8 +180,7 @@ public class Permissions
                 Order.GetMy,
                 Review.Create,
                 Review.Delete,
-                Account.UpdateProfile,
-                Account.ChangePassword
+               
             },
 
 
@@ -198,8 +196,7 @@ public class Permissions
                  Product.GetAllFavourite,
                  Review.Create,
                  Review.Delete,
-                 Account.UpdateProfile,
-                 Account.ChangePassword
+              
 
             },
 
@@ -227,8 +224,8 @@ public class Permissions
                 Review.Delete,
                 User.GetAll,
                 User.GetById,
-                Account.UpdateProfile,
-                Account.ChangePassword
+                Account.AddRole
+
             },
 
             _ => new List<string>()
@@ -240,13 +237,10 @@ public class Permissions
     {
         public const string AddRole = "Account.AddRole";
         public const string Create = "Account.Create";
-        public const string UpdateProfile = "Account.UpdateProfile";
-        public const string ChangePassword = "Account.ChangePassword";
+  
 
         public static List<string> All = new()
     {
-        UpdateProfile,
-        ChangePassword,
         AddRole,
         Create
 

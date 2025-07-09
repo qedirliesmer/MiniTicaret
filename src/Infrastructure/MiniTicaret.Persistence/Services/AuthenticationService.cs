@@ -1,43 +1,56 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using MiniTicaret.Application.Abstracts.Services;
 using MiniTicaret.Application.DTOs.AuthenticationDTOs;
-using MiniTicaret.Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
-using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using MiniTicaret.Application.Shared.Permissions;
-using Microsoft.Extensions.Options;
-using MiniTicaret.Application.Shared.Settings;
-using Microsoft.Extensions.Logging;
 using MiniTicaret.Application.Exceptions;
+using MiniTicaret.Application.Shared.Responses;
+using MiniTicaret.Application.Shared.Settings;
+using MiniTicaret.Domain.Entities;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 namespace MiniTicaret.Persistence.Services;
 
 public class AuthenticationService : IAuthenticationService
 {
+    private readonly IMapper _mapper;
     private readonly UserManager<AppUser> _userManager;
+    private readonly SignInManager<AppUser> _signInManager;
     private readonly RoleManager<IdentityRole> _roleManager;
     private readonly JWTSettings _jwtSettings;
     private readonly ILogger<AuthenticationService> _logger;
-
+    private readonly IEmailService _emailService;
+    private readonly IConfiguration _configuration;
     public AuthenticationService(
         UserManager<AppUser> userManager,
         RoleManager<IdentityRole> roleManager,
         IOptions<JWTSettings> jwtOptions,
-        ILogger<AuthenticationService> logger)
+        ILogger<AuthenticationService> logger,
+        IMapper mapper,
+        IEmailService _emailService,
+        IConfiguration _configuration,
+        SignInManager<AppUser> signInManager)
     {
         _userManager = userManager;
         _roleManager = roleManager;
         _jwtSettings = jwtOptions.Value;
         _logger = logger;
+        _mapper = mapper;
+        _signInManager = signInManager;
     }
 
+    private string GenerateRefreshToken()
+    {
+        byte[] bytes = new byte[64];
+        RandomNumberGenerator.Fill(bytes);
+        return WebEncoders.Base64UrlEncode(bytes);
+    }
     public async Task<AuthenticationTokenResponseDto> RegisterAsync(AuthenticationRegisterDto dto)
     {
         var existingUser = await _userManager.FindByEmailAsync(dto.Email);
@@ -86,7 +99,14 @@ public class AuthenticationService : IAuthenticationService
     public async Task<AuthenticationTokenResponseDto> LoginAsync(AuthenticationLoginDto dto)
     {
         var user = await _userManager.FindByEmailAsync(dto.Email);
-        if (user == null || !await _userManager.CheckPasswordAsync(user, dto.Password))
+        if (user == null)//STARE AT THEN
+        {
+            _logger.LogWarning("Invalid login attempt for email: {Email}", dto.Email);
+            throw new ValidationException(new[] { "Email or password is incorrect." });
+        }
+
+        var signInResult = await _signInManager.CheckPasswordSignInAsync(user, dto.Password, true);
+        if (!signInResult.Succeeded)//STARE AT THEN
         {
             _logger.LogWarning("Invalid login attempt for email: {Email}", dto.Email);
             throw new ValidationException(new[] { "Email or password is incorrect." });
@@ -108,48 +128,188 @@ public class AuthenticationService : IAuthenticationService
         return user;
     }
 
+    //private async Task<AuthenticationTokenResponseDto> GenerateToken(AppUser user)
+    //{
+    //    var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.SecretKey));
+    //    var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+
+    //    var claims = new List<Claim>
+    //    {
+    //        new(ClaimTypes.NameIdentifier, user.Id),
+    //        new(ClaimTypes.Name, user.UserName)
+    //    };
+    //    var roles = await _userManager.GetRolesAsync(user);
+
+    //    foreach (var roleName in roles)
+    //    {
+    //        claims.Add(new Claim(ClaimTypes.Role, roleName));
+
+    //        // var role = await _roleManager.FindByNameAsync(roleName);
+    //        //if (role != null)
+    //        //{
+    //        //    var roleClaims = await _roleManager.GetClaimsAsync(role);//buda 0 gelirdi
+
+    //        //    var permissionClaims = roleClaims// buda 0 gelirdi//BOSHDU AXI DB ONA GORE   NECE YENI TAM ANLAMADIM DEYER DAXIL ETMELIYDIM?
+    //        //        .Where(c => c.Type == "Permission")
+    //        //        .Distinct()
+    //        //        .ToList();
+
+    //        //     foreach (var permissionClaim in permissionClaims)
+    //        //    {
+    //        //        if (!claims.Any(c => c.Type == "Permission" && c.Value == permissionClaim.Value))
+    //        //        {
+    //        //            claims.Add(new Claim("Permission", permissionClaim.Value));
+    //        //        }
+    //        //    }
+    //        //}
+    //    }
+    //    //foreach (var roleName in roles)
+    //    //{
+    //    //    if (!claims.Any(c => c.Type == ClaimTypes.Role && c.Value == roleName))
+    //    //    {
+    //    //        claims.Add(new Claim(ClaimTypes.Role, roleName));
+    //    //    }
+
+    //    //    var role = await _roleManager.FindByNameAsync(roleName);
+    //    //    if (role != null)
+    //    //    {
+    //    //        var roleClaims = await _roleManager.GetClaimsAsync(role);
+
+    //    //        foreach (var permissionClaim in roleClaims
+    //    //            .Where(c => c.Type == "Permission")
+    //    //            .Distinct())
+    //    //        {
+    //    //            if (!claims.Any(c => c.Type == "Permission" && c.Value == permissionClaim.Value))
+    //    //            {
+    //    //                claims.Add(new Claim("Permission", permissionClaim.Value));
+    //    //            }
+    //    //        }
+    //    //    }
+    //    //}
+
+    //    var token = new JwtSecurityToken(
+    //        issuer: _jwtSettings.Issuer,
+    //        audience: _jwtSettings.Audience,
+    //        notBefore: DateTime.UtcNow,
+    //        claims: claims,
+    //        expires: DateTime.UtcNow.AddMinutes(Convert.ToDouble(_jwtSettings.ExpiryMinutes)),
+    //        signingCredentials: creds);
+
+    //    var accessToken = new JwtSecurityTokenHandler().WriteToken(token);
+    //    var refreshToken = GenerateRefreshToken();
+
+    //    user.RefreshToken = refreshToken;
+    //    user.ExpiryDate = DateTime.UtcNow.AddMinutes(30);//
+    //    await _userManager.UpdateAsync(user);
+    //    var tokenResponse = new TokenResponse
+    //    {
+    //        Token = accessToken,
+    //        RefreshToken = refreshToken,
+    //        ExpireDate = user.ExpiryDate
+    //    };
+    //    var dto = _mapper.Map<AuthenticationTokenResponseDto>(tokenResponse);
+    //    return dto;
+    //}
+
     private async Task<AuthenticationTokenResponseDto> GenerateToken(AppUser user)
     {
-        var roles = await _userManager.GetRolesAsync(user);
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.SecretKey));
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var claims = new List<Claim>
         {
-            new Claim(ClaimTypes.NameIdentifier, user.Id),
-            new Claim(ClaimTypes.Name, user.UserName ?? throw new Exception("UserName is null")),
-            new Claim(ClaimTypes.Email, user.Email ?? throw new Exception("Email is null"))
+            new(ClaimTypes.NameIdentifier, user.Id)
         };
 
-        foreach (var role in roles)
+        var roles = await _userManager.GetRolesAsync(user);
+        foreach (var roleName in roles)
         {
-            claims.Add(new Claim(ClaimTypes.Role, role));
+            claims.Add(new Claim(ClaimTypes.Role, roleName));
 
-            var permissions = Permissions.GetPermissionsByRole(role);
-            foreach (var permission in permissions.Distinct())
+            var role = await _roleManager.FindByNameAsync(roleName);
+            if (role != null)
             {
-                claims.Add(new Claim("Permission", permission));
+                var roleClaims = await _roleManager.GetClaimsAsync(role);
+
+                foreach (var permissionClaim in roleClaims
+                    .Where(c => c.Type == "Permission")
+                    .Distinct())
+                {
+                    if (!claims.Any(c => c.Type == "Permission" && c.Value == permissionClaim.Value))
+                    {
+                        claims.Add(new Claim("Permission", permissionClaim.Value));
+                    }
+                }
             }
         }
-
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.SecretKey));
-        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-        var expires = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpiryMinutes);
 
         var token = new JwtSecurityToken(
             issuer: _jwtSettings.Issuer,
             audience: _jwtSettings.Audience,
+            notBefore: DateTime.UtcNow,
             claims: claims,
-            expires: expires,
-            signingCredentials: creds
-        );
+            expires: DateTime.UtcNow.AddMinutes(Convert.ToDouble(_jwtSettings.ExpiryMinutes)),
+            signingCredentials: creds);
 
         var accessToken = new JwtSecurityTokenHandler().WriteToken(token);
-        _logger.LogInformation("JWT Token generated for user {UserId}", user.Id);
+        var refreshToken = GenerateRefreshToken();
 
-        return new AuthenticationTokenResponseDto
+        user.RefreshToken = refreshToken;
+        user.ExpiryDate = DateTime.UtcNow.AddMinutes(30);
+        await _userManager.UpdateAsync(user);
+
+        var tokenResponse = new TokenResponse
         {
-            AccessToken = accessToken,
-            RefreshToken = "", // refresh token varsa əlavə edə bilərsən
-            ExpireDate = expires
+            Token = accessToken,
+            RefreshToken = refreshToken,
+            ExpireDate = user.ExpiryDate
         };
+
+        var dto = _mapper.Map<AuthenticationTokenResponseDto>(tokenResponse);
+        return dto;
     }
+    public async Task SendEmailConfirmationAsync(AppUser user)
+    {
+        var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+        var encodedToken = Uri.EscapeDataString(token);
+
+        var confirmUrl = $"{_configuration["AppSettings:FrontendUrl"]}/confirm-email?userId={user.Id}&token={encodedToken}";
+
+        var message = $"<p>Salam, zəhmət olmasa email ünvanınızı təsdiqləyin: <a href='{confirmUrl}'>Təsdiq et</a></p>";
+
+        await _emailService.SendEmailAsync(
+            new List<string> { user.Email },
+            "Email təsdiqi",
+            message
+        );
+    }
+
+    public async Task<bool> ConfirmEmailAsync(string userId, string token)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null) return false;
+
+        var result = await _userManager.ConfirmEmailAsync(user, token);
+        return result.Succeeded;
+    }
+
+    public async Task<bool> CanUserLoginAsync(AppUser user)
+    {
+        return await _userManager.IsEmailConfirmedAsync(user);
+    }
+
+    public async Task RegisterUserAsync(AppUser user, string password)
+    {
+        var result = await _userManager.CreateAsync(user, password);
+        if (!result.Succeeded)
+            throw new Exception("User creation failed: " + string.Join(", ", result.Errors.Select(e => e.Description)));
+
+        await SendEmailConfirmationAsync(user);
+    }
+  
+
 }
+
+
+

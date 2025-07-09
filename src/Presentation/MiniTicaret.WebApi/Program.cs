@@ -163,6 +163,11 @@ builder.Services.AddDbContext<MiniTicaretDbContext>(options =>
 });
 
 var app = builder.Build();
+using (var scope = app.Services.CreateScope())
+{
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    await DbInitializer.SeedPermissionsAsync(roleManager);
+}
 
 app.UseHttpsRedirection();
 
